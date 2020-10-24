@@ -35,38 +35,3 @@ char_ctrl = [UNUSABLE, LINE_BREAK, PARA_BREAK, HYPHEN, 25, 26, 27, 28, 29, BUNDL
 inline_ctrl = [FIELD_END, 5, 6, 7, TITLE_MARK, TAB, 19, 20]
 extended_ctrl = [1, DEF_AREA, FIELD_START, DRAW, 12, 14, HIDE_DESC, HEADER_FOOTER, FOOTNOTE_ENDNOTE, AUTO_NUM, PAGE_CTRL,
                  BOOKMARK, COMMENT]
-
-
-class FilterData:
-    def __init__(self, stream):
-        self.stream = stream
-        self.info = None
-        self.ctrl = None
-        self.data = None
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if len(self.stream) <= 0:
-            raise StopIteration
-
-        pos = 0
-        while pos < len(self.stream):
-            if int(self.stream[pos]) <= 0x1f:
-                break
-            pos += 1
-        else:
-            # pos = -1
-            raise StopIteration
-
-        self.ctrl = self.stream[pos]
-        if self.ctrl in char_ctrl:
-            self.data = self.stream[:pos]
-            self.stream = self.stream[pos + 1:]
-            return self.data
-        else:
-            self.data = self.stream[:pos]
-            self.info = self.stream[pos + 1:pos + 7]
-            self.stream = self.stream[pos + 8:]
-            return self.data

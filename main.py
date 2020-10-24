@@ -1,16 +1,26 @@
-# This is a sample Python script.
+import zlib
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+from olefile import OleFileIO
+
+from spec.tag_id import HWPTAG_PARA_TEXT
+from spec.record import DataRecord
+
+HWP_WBITS = -15
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+def iter_text(stream):
+    with OleFileIO(stream) as ole:
+        body_text = ['/'.join(ls) for ls in ole.listdir() if 'BodyText' in ls]
+        for section in body_text:
+            hwp_section_stream = ole.openstream(section).read()
+            hwp_section = zlib.decompress(hwp_section_stream, wbits=HWP_WBITS)
+            record = DataRecord(hwp_section)
+            for r in record:
+                print(HWPTAG_PARA_TEXT, r.tag_id, r)
+                if r.tag_id == HWPTAG_PARA_TEXT:
+                    yield r.data.decode('utf-16-le')
 
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    with open('C:/Users/jongwony/Downloads/example.hwp', 'rb') as f:
+        print(list(iter_text(f)))
